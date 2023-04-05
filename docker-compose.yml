@@ -40,12 +40,12 @@ services:
       MONGO_DB: vision-db
       MONGO_USER: vision-db-user
       MONGO_PWD: vision-db-password
-      SMTP_HOST: smtp-relay.sendinblue.com #mysmtphost
-      SMTP_PORT: 587 #mysmtpport
+      SMTP_HOST:  #mysmtphost
+      SMTP_PORT:  #mysmtpport
       SMTP_SECURE: "false"
-      SMTP_FROM: no-reply@algotech.vision #myemail
-      SMTP_USER: a.besse@algotech.fr #mysmtpuser
-      SMTP_PASS: aEI72tMkhV8b9AOd #mysmtppwd
+      SMTP_FROM:  #myemail
+      SMTP_USER:  #mysmtpuser
+      SMTP_PASS:  #mysmtppwd
       KEYCLOAK_USER: vision-kc-admin
       KEYCLOAK_PASSWORD: vision-kc-password
       KEYCLOAK_URL: http://vision-localhost/auth

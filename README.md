@@ -41,8 +41,10 @@ $./init/stack-vision
 ```
 ##### note
 Les identifiants de connection par défaut de la plateforme sont:
- - utilisateur : vision-sadmin-user 
- - mot de passe: vision-sadmin-password
+ 
+ * utilisateur : vision-sadmin-user 
+ * mot de passe: vision-sadmin-password
+
 Pour les modifier veuillez éditer le fichier (./init/stack-vision) et modifier les variables (VISION_SADMIN_USER et VISION_SADMIN_PASSWORD) avant de lancer le script
 #### Navigation
 
