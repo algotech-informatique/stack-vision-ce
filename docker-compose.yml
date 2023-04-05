@@ -1,0 +1,115 @@
+version: '2'
+services:
+  vision-localhost:
+    image: traefik:v2.9
+    restart: always
+    container_name: "traefik"
+    ports:
+     - "80:80"
+     - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./conf/traefik:/etc/traefik
+
+  mongodb:
+    image: mongo:4.2.0
+    container_name: "mongodb"
+    restart: always
+    ports:
+     - "27017:27017"
+    environment:
+      - AUTH=yes
+      - ADMIN_USER=my-admin-db-user
+      - ADMIN_PASS=my-admin-db-password
+      - APPLICATION_DATABASE=vision-db
+      - APPLICATION_USER=vision-db-user
+      - APPLICATION_PASS=vision-db-password
+    volumes:
+      - vision-db:/data/db
+      - ./conf/mongodb:/docker-entrypoint-initdb.d
+
+  vision-server:
+    container_name: "vision-server"
+    image: registry.myalgotech.io/vision-server:latest-ce
+    restart: always
+    depends_on:
+      - keycloak
+      - mongodb
+    environment:
+      MONGO_HOST: mongodb:27017
+      MONGO_DB: vision-db
+      MONGO_USER: vision-db-user
+      MONGO_PWD: vision-db-password
+      SMTP_HOST: smtp-relay.sendinblue.com #mysmtphost
+      SMTP_PORT: 587 #mysmtpport
+      SMTP_SECURE: "false"
+      SMTP_FROM: no-reply@algotech.vision #myemail
+      SMTP_USER: a.besse@algotech.fr #mysmtpuser
+      SMTP_PASS: aEI72tMkhV8b9AOd #mysmtppwd
+      KEYCLOAK_USER: vision-kc-admin
+      KEYCLOAK_PASSWORD: vision-kc-password
+      KEYCLOAK_URL: http://vision-localhost/auth
+      DOMAIN_NAME: http://vision-localhost
+      CUSTOMER_KEY: vision
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.socket-server.rule=Host(`vision-localhost`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.socket-server.entrypoints=web"
+      - "traefik.http.routers.socket-server.service=ws"
+      - "traefik.http.services.ws.loadbalancer.server.port=3001" 
+
+      - "traefik.http.routers.vision-server.rule=Host(`vision-localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.vision-server.entrypoints=web"
+      - "traefik.http.routers.vision-server.service=api"
+      - "traefik.http.routers.vision-server.middlewares=vision-server-api@docker"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
+
+      - "traefik.frontend.passHostHeader=true"
+      - "traefik.http.middlewares.vision-server-api.replacepathregex.regex=^/api/(.*)"
+      - "traefik.http.middlewares.vision-server-api.replacepathregex.replacement=/$$1"
+
+  keycloak:
+    container_name: "keycloak"
+    image: registry.myalgotech.io/algo-keycloak:OpenSource-ce
+    command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth
+    environment:
+      KEYCLOAK_ADMIN: vision-kc-admin
+      KEYCLOAK_ADMIN_PASSWORD: vision-kc-password
+      PROXY_ADDRESS_FORWARDING: "true"
+    volumes:
+      - vision-kc:/opt/keycloak/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`vision-localhost`) && PathPrefix(`/auth`)"
+      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.middlewares=keycloak@docker"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.keycloak.replacepathregex.regex=^/auth/(.*)"
+      - "traefik.http.middlewares.keycloak.replacepathregex.replacement=/$$1"
+
+  pwa-studio:
+    image: registry.myalgotech.io/pwa-studio:latest-ce
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pwa-studio.rule=Host(`vision-localhost`) && PathPrefix(`/studio`)"
+      - "traefik.http.routers.pwa-studio.entrypoints=web"
+      - "traefik.http.services.pwa-studio.loadbalancer.server.port=8080"
+      - "traefik.frontend.passHostHeader=true"
+
+  pwa-player:
+    image: registry.myalgotech.io/pwa-player:latest-ce
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pwa-player.rule=Host(`vision-localhost`) && PathPrefix(`/player`)" #A modifier
+      - "traefik.http.routers.pwa-player.entrypoints=web"
+      - "traefik.http.services.pwa-player.loadbalancer.server.port=8080"
+      - "traefik.frontend.passHostHeader=true"
+
+volumes:
+  vision-db:
+  vision-kc:

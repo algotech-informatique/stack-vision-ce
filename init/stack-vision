@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+CUSTOMER_KEY=vision
+VISION_SADMIN_USER=vision-sadmin
+VISION_SADMIN_PASSWORD=vision-sadmin-password
+VISION_SADMIN_EMAIL=vision-samin@vision-localhost.me
+
+KC_ADMIN=vision-kc-admin
+KC_PASSWORD=vision-kc-password
+CUSTOMER_URL=http://vision-localhost
+
+
+########Keycloak sign-in
+KC_HOST="${CUSTOMER_URL}/auth/realms/master/protocol/openid-connect/token"
+KEYCLOAK_TOKEN=$(curl -H "Accept: application/json" -d 'client_id='admin-cli'' -d 'username='${KC_ADMIN}'' -d 'password='${KC_PASSWORD}'' -d 'grant_type=password' -d 'scope=openid' ''${KC_HOST}'' | jq '.access_token' | tr -d '"')
+##########################
+
+data_init()
+{
+ cat <<EOF
+{
+    "customerKey": "$CUSTOMER_KEY",
+    "name": "$VISION_SADMIN_USER",
+    "login": "$VISION_SADMIN_USER",
+    "email": "$VISION_SADMIN_EMAIL",
+    "password": "$VISION_SADMIN_PASSWORD",
+    "languages": [
+        {
+            "lang": "fr-FR",
+            "value": "Français"
+        }
+    ],
+    "licenceKey": "Community-Edition"
+}
+EOF
+}
+
+curl --location --request POST ''${CUSTOMER_URL}'/api/admin/customers/init' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer '${KEYCLOAK_TOKEN}'' \
+--data-raw "$(data_init)"
