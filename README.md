@@ -42,7 +42,7 @@ Vérifiez que la stack a totalement démarré en allant sur :
 http://vision-localhost/studio
 
 Vous devriez avoir cette page:
-![stack-ready-to-init](./init/stack-init-ready.png)
+![stack-ready-to-init](https://github.com/algotech-informatique/stack-vision-ce/blob/main/init/vision-init-ready.png)
 Vous pouvez maintenant initialiser la plateforme en tapant la commande suivante:
 
 ```
