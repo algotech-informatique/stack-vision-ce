@@ -35,7 +35,11 @@ data_init()
 EOF
 }
 
+<<<<<<< HEAD
 curl --location --request POST ''${CUSTOMER_URL}'/api/admin/customers/init' \
+=======
+curl --location --request POST ''${CUSTOMER_URL}'/api/admin/customers/init?ignoreEmail=true' \
+>>>>>>> a0ffcb8... First Version
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer '${KEYCLOAK_TOKEN}'' \
 --data-raw "$(data_init)"
