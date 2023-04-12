@@ -50,7 +50,7 @@ services:
       KEYCLOAK_PASSWORD: vision-kc-password
       KEYCLOAK_URL: http://vision-localhost/auth
       DOMAIN_NAME: http://vision-localhost
-      CUSTOMER_KEY: vision
+      CUSTOMER_KEY: vision-ce
     labels:
       - "traefik.enable=true"
       
@@ -71,8 +71,9 @@ services:
 
   keycloak:
     container_name: "keycloak"
+    restart: always
     image: registry.myalgotech.io/algo-keycloak:OpenSource-ce
-    command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth
+    command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth --health-enabled=true
     environment:
       KEYCLOAK_ADMIN: vision-kc-admin
       KEYCLOAK_ADMIN_PASSWORD: vision-kc-password
@@ -90,6 +91,7 @@ services:
 
   pwa-studio:
     image: registry.myalgotech.io/pwa-studio:latest-ce
+    restart: always
     volumes:
       - /etc/timezone:/etc/timezone:ro
     labels:
@@ -100,12 +102,13 @@ services:
       - "traefik.frontend.passHostHeader=true"
 
   pwa-player:
+    restart: always
     image: registry.myalgotech.io/pwa-player:latest-ce
     volumes:
       - /etc/timezone:/etc/timezone:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pwa-player.rule=Host(`vision-localhost`) && PathPrefix(`/player`)" #A modifier
+      - "traefik.http.routers.pwa-player.rule=Host(`vision-localhost`)"
       - "traefik.http.routers.pwa-player.entrypoints=web"
       - "traefik.http.services.pwa-player.loadbalancer.server.port=8080"
       - "traefik.frontend.passHostHeader=true"

@@ -1,41 +1,81 @@
 #!/bin/bash
-#
-CUSTOMER_KEY=vision
-VISION_SADMIN_USER=vision-sadmin
-VISION_SADMIN_PASSWORD=vision-sadmin-password
-VISION_SADMIN_EMAIL=vision-samin@vision-localhost.me
+
+CUSTOMER_KEY=vision-ce
+
+VISION_URL=http://vision-localhost
+
+#######Identity###############
+read -p "Tapez votre Login* [Obligatoire]:" VISION_SADMIN_LOGIN
+if [ "${VISION_SADMIN_LOGIN}x" == "x" ];then
+echo "[Retry] Votre Login est manquant"
+exit 1
+fi
+VISION_SADMIN_LOGIN=$(echo "$VISION_SADMIN_LOGIN" | sed 's/[^[:alnum:]]//g' | iconv -c -f utf8 -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]')
+read -p "Tapez votre Password: [Auto]" VISION_SADMIN_PASSWORD
+read -p "Tapez votre Prénom [Dark]:" VISION_SADMIN_FIRSTNAME
+read -p "Tapez votre Nom [Vador]:" VISION_SADMIN_LASTNAME
+read -p "Tapez votre Email [dark-vador@vision-localhost.me]:" VISION_SADMIN_EMAIL
+
+if [ "${VISION_SADMIN_PASSWORD}x" == "x" ];then
+VISION_SADMIN_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
+fi
+if [ "${VISION_SADMIN_FIRSTNAME}x" == "x" ];then
+VISION_SADMIN_FIRSTNAME=Dark
+fi
+if [ "${VISION_SADMIN_LASTNAME}x" == "x" ];then
+VISION_SADMIN_LASTNAME=Vador
+fi
+if [ "${VISION_SADMIN_EMAIL}x" == "x" ];then
+VISION_SADMIN_EMAIL="dark-vador@vision-localhost.me"
+fi
+###############################
+clear
 
 KC_ADMIN=vision-kc-admin
 KC_PASSWORD=vision-kc-password
-CUSTOMER_URL=http://vision-localhost
+KC_HOST="${VISION_URL}/auth/realms/master/protocol/openid-connect/token"
 
-
-########Keycloak sign-in
-KC_HOST="${CUSTOMER_URL}/auth/realms/master/protocol/openid-connect/token"
-KEYCLOAK_TOKEN=$(curl -H "Accept: application/json" -d 'client_id='admin-cli'' -d 'username='${KC_ADMIN}'' -d 'password='${KC_PASSWORD}'' -d 'grant_type=password' -d 'scope=openid' ''${KC_HOST}'' | jq '.access_token' | tr -d '"')
-##########################
 
 data_init()
 {
  cat <<EOF
 {
     "customerKey": "$CUSTOMER_KEY",
-    "name": "$VISION_SADMIN_USER",
-    "login": "$VISION_SADMIN_USER",
+    "login": "$VISION_SADMIN_LOGIN",
     "email": "$VISION_SADMIN_EMAIL",
     "password": "$VISION_SADMIN_PASSWORD",
+    "firstName": "$VISION_SADMIN_FIRSTNAME",
+    "lastName": "$VISION_SADMIN_LASTNAME",
+    "defaultapplications" : ["onboarding","meteo"],
     "languages": [
         {
             "lang": "fr-FR",
             "value": "Français"
         }
-    ],
-    "licenceKey": "Community-Edition"
+    ]
 }
 EOF
 }
 
-curl --location --request POST ''${CUSTOMER_URL}'/api/admin/customers/init?ignoreEmail=true' \
+count=0
+
+echo -n "Vision-CE getting ready"
+while [ "$(curl --silent ${VISION_URL}/api/ready)" != "true" ];
+do
+echo -n "."
+sleep 1
+count=$((count+1))
+done
+
+########Keycloak sign-in
+
+KEYCLOAK_TOKEN=$(curl --silent -H "Accept: application/json" -d 'client_id='admin-cli'' -d 'username='${KC_ADMIN}'' -d 'password='${KC_PASSWORD}'' -d 'grant_type=password' -d 'scope=openid' ''${KC_HOST}'' | jq '.access_token' | tr -d '"')
+##########################
+
+INIT=$(curl --silent --location --request POST ''${VISION_URL}'/api/admin/customers/init?ignoreEmail=true' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer '${KEYCLOAK_TOKEN}'' \
---data-raw "$(data_init)"
+--data-raw "$(data_init)")
+
+
+echo -e "\nVision-CE ready in ${count}s \n    url: [ ${VISION_URL} ] \n    login: ${VISION_SADMIN_LOGIN} \n    password: ${VISION_SADMIN_PASSWORD}"

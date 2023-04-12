@@ -1,5 +1,5 @@
 #!/bin/sh
-
+#set -x
 # ADMIN user
 ADMIN_USER_MONGO=${ADMIN_USER:-"admin"}
 ADMIN_PASS_MONGO=${ADMIN_PASS:-"admin"}
@@ -18,11 +18,15 @@ EOF
 touch /data/db/.configured
 
 ####icons
-mkdir /tmp/${APPLICATION_DATABASE}
-cp /docker-entrypoint-initdb.d/assets/icons.bson.gz /tmp/${APPLICATION_DATABASE}/
-FILE_DUMP="icons.bson.gz"
-PARAM_DB="--authenticationDatabase $APPLICATION_DATABASE -u $APPLICATION_USER -p $APPLICATION_PASS --gzip /tmp/${APPLICATION_DATABASE}/${FILE_DUMP}"
+TMP_DIR="/tmp/${APPLICATION_DATABASE}"
+mkdir ${TMP_DIR}
+cp /docker-entrypoint-initdb.d/assets/* ${TMP_DIR}/
+cd ${TMP_DIR}/
+FILE_DUMP=($(ls *.bson.gz))
+for f in ${FILE_DUMP[@]}; do
+PARAM_DB="--authenticationDatabase $APPLICATION_DATABASE -u $APPLICATION_USER -p $APPLICATION_PASS --gzip ${TMP_DIR}/$f"
 mongorestore ${PARAM_DB}
-rm -rf mkdir /tmp/${APPLICATION_DATABASE}
+done
+rm -rf mkdir ${TMP_DIR}
 ####
 echo "Mongo ready for use"

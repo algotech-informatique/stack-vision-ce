@@ -4,15 +4,24 @@
 | Environnement | Description           |
 | ------ | --------------------- |
 | **SYSTEM**  | RAM : 4 Go min  |
-|             | OS: Ubuntu Server 18.04/20.04 LTS |
-|             | Plateforme: Docker CE 19.03 ou supp |
-|             | Dépendances: curl jq |
+|             | Os: Ubuntu/Debian |
+|             | Plateforme: Docker CE 20 ou supp |
+|             | Dépendances: curl jq git|
 | **CLIENT**  | Navigateur : Basé sur Chromium |
+| **NOTIFICATIONS** |Gestion des notifications par E-mail via un serveur SMTP sécurisé (TLS) + authentification    |
+|                   |SMTP_HOST : serveur smtp                 |
+|                   |SMTP_PORT : port smtp 587/TLS (+ certificat valide) |
+|                   |SMTP_FROM : adresse source (from)        |
+|                   |SMTP_USER : l'utilisateur                |
+|                   |SMTP_PASS : le mot de passe              |
+
+### Important
+A l'exception de l'utilisateur "super-admin", l'ajout de nouveau utilisateur nécéssitera le paramétrage des variables SMTP (cf docker-compose.yml) afin que les notifications par E-mail soient fonctionnelles et qu'il puisse recevoir le lien d'initialisation de leur compte.
 
 ## Installation de la BASE
 ### Docker
 Docker Community Edition (Docker CE)
-L'installation de Docker-Ce (v19.03 ou supérieure) est nécessaire pour lancer la plateforme vision.
+L'installation de Docker-Ce (v20 ou supérieure) est nécessaire pour lancer la plateforme vision.
 Suivre la procédure d'installation [**suivante**](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
 ### Dépendances
 ```
@@ -26,37 +35,34 @@ git clone https://github.com/algotech-informatique/stack-vision-ce.git
 #### Configuration
 ajouter 'vision-localhost' dans votre fichier hosts (exemple)
 ```
-#nano /etc/hosts
+sudo nano /etc/hosts
+
 127.0.0.1 localhost vision-localhost
 ```
 
 #### Démarrage de la stack
 ```
-~$cd stack-vision-ce
-stack-vision-ce$docker compose up
-```
-
-
-#### Init (la première fois)
-Vérifiez que la stack a totalement démarré en allant sur :
-http://vision-localhost/studio
-
-Vous devriez avoir cette page:
-![stack-ready-to-init](https://github.com/algotech-informatique/stack-vision-ce/blob/main/init/vision-init-ready.png)
-Vous pouvez maintenant initialiser la plateforme en tapant la commande suivante:
+cd stack-vision-ce && docker compose up
 
 ```
-stack-vision-ce$./init/stack-vision
-```
-##### note
-Les identifiants de connection par défaut de la plateforme sont:
- 
- * utilisateur : vision-sadmin-user 
- * mot de passe: vision-sadmin-password
 
-Pour les modifier veuillez éditer le fichier (./init/stack-vision) et modifier les variables (VISION_SADMIN_USER et VISION_SADMIN_PASSWORD) avant de lancer le script
+#### Initialisation (au premier démarrage)
+
+Dans un autre terminal initialisez la plateforme:
+
+```
+cd stack-vision-ce && ./init/stack-vision
+Tapez votre Login: my-user-login
+Tapez votre Password: mysuperpassword
+Tapez votre Prénom: Dark
+Tapez votre Nom: Vador
+Tapez votre Email: dark-vador@vision-localhost.me
+```
+
 #### Navigation
 
-Le studio de la plateforme est disponible http://vision-localhost/studio
+La plateforme vision est disponible http://vision-localhost/
 
-Le player de vos applications est disponible http://vision-localhost/player
+## License
+
+[Mozilla Public License v2.0](https://github.com/algotech-informatique/stack-vision-ce/blob/main/LICENSE)
