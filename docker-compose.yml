@@ -30,7 +30,7 @@ services:
 
   vision-server:
     container_name: "vision-server"
-    image: registry.myalgotech.io/vision-server:latest-ce
+    image: algotechinfo/vision-server
     restart: always
     depends_on:
       - keycloak
@@ -72,7 +72,7 @@ services:
   keycloak:
     container_name: "keycloak"
     restart: always
-    image: registry.myalgotech.io/algo-keycloak:OpenSource-ce
+    image: algotechinfo/algo-keycloak
     command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth --health-enabled=true
     environment:
       KEYCLOAK_ADMIN: vision-kc-admin
@@ -90,7 +90,7 @@ services:
       - "traefik.http.middlewares.keycloak.replacepathregex.replacement=/$$1"
 
   pwa-studio:
-    image: registry.myalgotech.io/pwa-studio:latest-ce
+    image: algotechinfo/pwa-studio
     restart: always
     volumes:
       - /etc/timezone:/etc/timezone:ro
@@ -103,7 +103,7 @@ services:
 
   pwa-player:
     restart: always
-    image: registry.myalgotech.io/pwa-player:latest-ce
+    image: algotechinfo/pwa-player
     volumes:
       - /etc/timezone:/etc/timezone:ro
     labels:
