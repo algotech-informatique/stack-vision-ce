@@ -15,8 +15,6 @@ use $APPLICATION_DATABASE
 db.createUser({user: '$APPLICATION_USER', pwd: '$APPLICATION_PASS', roles:[{role:'dbOwner', db:'$APPLICATION_DATABASE'}], passwordDigestor : 'server'})
 EOF
 
-touch /data/db/.configured
-
 ####icons
 TMP_DIR="/tmp/${APPLICATION_DATABASE}"
 mkdir ${TMP_DIR}
@@ -30,3 +28,5 @@ done
 rm -rf mkdir ${TMP_DIR}
 ####
 echo "Mongo ready for use"
+
+touch /data/db/.configured

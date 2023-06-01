@@ -1,8 +1,14 @@
 #!/bin/bash
 
 CUSTOMER_KEY=vision-ce
-
 VISION_URL=http://vision-localhost
+KC_ADMIN=vision-kc-admin
+KC_PASSWORD=vision-kc-password
+
+
+if [ "${VISION_FQDN}x" != "x" ];then
+VISION_URL=https://${VISION_FQDN}
+fi
 
 #######Identity###############
 read -p "Tapez votre Login* [Obligatoire]:" VISION_SADMIN_LOGIN
@@ -31,10 +37,7 @@ fi
 ###############################
 clear
 
-KC_ADMIN=vision-kc-admin
-KC_PASSWORD=vision-kc-password
 KC_HOST="${VISION_URL}/auth/realms/master/protocol/openid-connect/token"
-
 
 data_init()
 {

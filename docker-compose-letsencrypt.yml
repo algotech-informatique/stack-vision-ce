@@ -1,14 +1,16 @@
 version: '2'
 services:
-  vision-localhost:
+  traefik:
     image: traefik:v2.9
     restart: always
     ports:
+     - "443:443"
      - "80:80"
      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./conf/traefik:/etc/traefik
+      - letsencrypt:/certs
+      - ./conf/traefik/traefik-letsencrypt.toml:/etc/traefik/traefik.toml
 
   mongodb:
     image: mongo:4.2.0
@@ -43,19 +45,23 @@ services:
       SMTP_PASS:  #mysmtppwd
       KEYCLOAK_USER: vision-kc-admin
       KEYCLOAK_PASSWORD: vision-kc-password
-      KEYCLOAK_URL: http://vision-localhost/auth
-      DOMAIN_NAME: http://vision-localhost
+      KEYCLOAK_URL: https://${VISION_FQDN}/auth
+      DOMAIN_NAME: https://${VISION_FQDN}
       CUSTOMER_KEY: vision-ce
     labels:
       - "traefik.enable=true"
       
-      - "traefik.http.routers.socket-server.rule=Host(`vision-localhost`) && PathPrefix(`/ws`)"
-      - "traefik.http.routers.socket-server.entrypoints=web"
+      - "traefik.http.routers.socket-server.rule=Host(`${VISION_FQDN}`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.socket-server.tls=true"
+      - "traefik.http.routers.socket-server.entrypoints=websecure"
+      - "traefik.http.routers.socket-server.tls.certresolver=lets-resolver"
       - "traefik.http.routers.socket-server.service=ws"
-      - "traefik.http.services.ws.loadbalancer.server.port=3001" 
+      - "traefik.http.services.ws.loadbalancer.server.port=3001"
 
-      - "traefik.http.routers.vision-server.rule=Host(`vision-localhost`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.vision-server.entrypoints=web"
+      - "traefik.http.routers.vision-server.rule=Host(`${VISION_FQDN}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.vision-server.tls=true"
+      - "traefik.http.routers.vision-server.entrypoints=websecure"
+      - "traefik.http.routers.vision-server.tls.certresolver=lets-resolver"
       - "traefik.http.routers.vision-server.service=api"
       - "traefik.http.routers.vision-server.middlewares=vision-server-api@docker"
       - "traefik.http.services.api.loadbalancer.server.port=3000"
@@ -67,7 +73,7 @@ services:
   keycloak:
     restart: always
     image: algotechinfo/algo-keycloak
-    command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth --health-enabled=true
+    command: start-dev --proxy edge --hostname-admin-url=https://${VISION_FQDN}/auth --hostname-url=https://${VISION_FQDN}/auth --health-enabled=true
     environment:
       KEYCLOAK_ADMIN: vision-kc-admin
       KEYCLOAK_ADMIN_PASSWORD: vision-kc-password
@@ -76,10 +82,14 @@ services:
       - vision-kc:/opt/keycloak/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.keycloak.rule=Host(`vision-localhost`) && PathPrefix(`/auth`)"
-      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.rule=Host(`${VISION_FQDN}`) && PathPrefix(`/auth`)"
+      - "traefik.http.routers.keycloak.tls=true"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=lets-resolver"
       - "traefik.http.routers.keycloak.middlewares=keycloak@docker"
       - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
+      - "traefik.frontend.passHostHeader=true"
       - "traefik.http.middlewares.keycloak.replacepathregex.regex=^/auth/(.*)"
       - "traefik.http.middlewares.keycloak.replacepathregex.replacement=/$$1"
 
@@ -90,8 +100,10 @@ services:
       - /etc/timezone:/etc/timezone:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pwa-studio.rule=Host(`vision-localhost`) && PathPrefix(`/studio`)"
-      - "traefik.http.routers.pwa-studio.entrypoints=web"
+      - "traefik.http.routers.pwa-studio.rule=Host(`${VISION_FQDN}`) && PathPrefix(`/studio`)"
+      - "traefik.http.routers.pwa-studio.tls=true"
+      - "traefik.http.routers.pwa-studio.entrypoints=websecure"
+      - "traefik.http.routers.pwa-studio.tls.certresolver=lets-resolver"
       - "traefik.http.services.pwa-studio.loadbalancer.server.port=8080"
       - "traefik.frontend.passHostHeader=true"
 
@@ -102,11 +114,14 @@ services:
       - /etc/timezone:/etc/timezone:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pwa-player.rule=Host(`vision-localhost`)"
-      - "traefik.http.routers.pwa-player.entrypoints=web"
+      - "traefik.http.routers.pwa-player.rule=Host(`${VISION_FQDN}`)"
+      - "traefik.http.routers.pwa-player.tls=true"
+      - "traefik.http.routers.pwa-player.entrypoints=websecure"
+      - "traefik.http.routers.pwa-player.tls.certresolver=lets-resolver"
       - "traefik.http.services.pwa-player.loadbalancer.server.port=8080"
       - "traefik.frontend.passHostHeader=true"
 
 volumes:
   vision-db:
   vision-kc:
+  letsencrypt:

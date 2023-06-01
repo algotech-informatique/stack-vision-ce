@@ -16,7 +16,7 @@
 |                   |SMTP_PASS : le mot de passe              |
 
 ### Important
-A l'exception de l'utilisateur "super-admin", l'ajout de nouveau utilisateur nécéssitera le paramétrage des variables SMTP (cf docker-compose.yml) afin que les notifications par E-mail soient fonctionnelles et qu'il puisse recevoir le lien d'initialisation de leur compte.
+A l'exception de l'utilisateur "super-admin", l'ajout de nouveau utilisateur necéssitera le paramétrage des variables SMTP (cf docker-compose.yml) afin que les notifications par E-mail soient fonctionnelles et qu'il puisse recevoir le lien d'initialisation de leur compte.
 
 ## Installation de la BASE
 ### Docker
@@ -32,36 +32,53 @@ sudo apt-get install jq curl git
 ```
 git clone https://github.com/algotech-informatique/stack-vision-ce.git
 ```
-#### Configuration
+## Installation en HTTP (localhost)
+### Configuration
 ajouter 'vision-localhost' dans votre fichier hosts (exemple)
 ```
 sudo nano /etc/hosts
 
 127.0.0.1 localhost vision-localhost
 ```
-
-#### Démarrage de la stack
+### Démarrage de la stack
 ```
 cd stack-vision-ce && docker compose up
 
 ```
-
-#### Initialisation (au premier démarrage)
+### Initialisation (au premier démarrage)
 
 Dans un autre terminal initialisez la plateforme:
 
 ```
 cd stack-vision-ce && ./init/stack-vision
-Tapez votre Login: my-user-login
-Tapez votre Password: mysuperpassword
-Tapez votre Prénom: Dark
-Tapez votre Nom: Vador
-Tapez votre Email: dark-vador@vision-localhost.me
+
 ```
 
-#### Navigation
+## Installation en HTTPS (letsencrypt)
+### Configuration
+ajouter une entrée DNS chez votre FOURNISSEUR
+```
+mysubdomain A mypublicip
+```
 
-La plateforme vision est disponible http://vision-localhost/
+### Démarrage de la stack
+```
+cd stack-vision-ce && export VISION_FQDN="fqdn" && docker compose -f docker-compose-letsencrypt.yml up
+
+```
+
+### Initialisation (au premier démarrage)
+
+Dans un autre terminal initialisez la plateforme:
+
+```
+cd stack-vision-ce && export VISION_FQDN="fqdn" && ./init/stack-vision
+
+```
+
+## Navigation
+
+La plateforme vision est disponible http://vision-localhost/ ou https://fqdn/
 
 ## License
 

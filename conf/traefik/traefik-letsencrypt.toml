@@ -10,6 +10,17 @@
   [entryPoints.web]
     address = ":80"
 
+  [entryPoints.websecure]
+    address = ":443"
+
+[certificatesResolvers]
+  [certificatesResolvers.lets-resolver]
+    [certificatesResolvers.lets-resolver.acme]
+      email = "myemail@mydomain.com"
+      storage = "/certs/acme.json"
+      [certificatesResolvers.lets-resolver.acme.httpChallenge]
+        entryPoint = "web"
+
 [providers.docker]
   # endpoint = "tcp://127.0.0.1:2737"
   # domain = "docker.localhost"
