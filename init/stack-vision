@@ -6,32 +6,70 @@ KC_ADMIN=vision-kc-admin
 KC_PASSWORD=vision-kc-password
 
 
-if [ "${VISION_FQDN}x" != "x" ];then
+if [[ ! -z "${VISION_FQDN}" ]];then
 VISION_URL=https://${VISION_FQDN}
 fi
 
 #######Identity###############
-read -p "Tapez votre Login* [Obligatoire]:" VISION_SADMIN_LOGIN
-if [ "${VISION_SADMIN_LOGIN}x" == "x" ];then
-echo "[Retry] Votre Login est manquant"
+read -p "Veuillez saisir votre identifiant [Obligatoire]:" VISION_SADMIN_LOGIN
+if [ -z "${VISION_SADMIN_LOGIN}" ];then
+echo "Votre login est manquant"
 exit 1
 fi
-VISION_SADMIN_LOGIN=$(echo "$VISION_SADMIN_LOGIN" | sed 's/[^[:alnum:]]//g' | iconv -c -f utf8 -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]')
-read -p "Tapez votre Password: [Auto]" VISION_SADMIN_PASSWORD
-read -p "Tapez votre Prénom [Dark]:" VISION_SADMIN_FIRSTNAME
-read -p "Tapez votre Nom [Vador]:" VISION_SADMIN_LASTNAME
-read -p "Tapez votre Email [dark-vador@vision-localhost.me]:" VISION_SADMIN_EMAIL
 
-if [ "${VISION_SADMIN_PASSWORD}x" == "x" ];then
-VISION_SADMIN_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 ; echo '')
+VISION_SADMIN_LOGIN=$(echo "$VISION_SADMIN_LOGIN" | sed 's/[^[:alnum:]]//g' | iconv -c -f utf8 -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]')
+read -sp "Veuillez saisir votre mot de passe:" VISION_SADMIN_PASSWORD
+echo  # Newline after password input
+
+if [[ -z "$VISION_SADMIN_PASSWORD" ]]; then
+    echo "Le mot de passe est vide."
+    exit 1
 fi
-if [ "${VISION_SADMIN_FIRSTNAME}x" == "x" ];then
+
+read -sp "Veuillez saisir à nouveau votre mot de passe:" VISION_SADMIN_NEW_PASSWORD
+echo  # Newline after password input
+
+if [[ "$VISION_SADMIN_PASSWORD" != "$VISION_SADMIN_NEW_PASSWORD" ]]; then
+    echo "Le mot de passe ressaisi ne correspond pas."
+    exit 1
+fi
+
+read -p "Veuillez saisir votre prénom [Dark]:" VISION_SADMIN_FIRSTNAME
+read -p "Veuillez saisir votre nom [Vador]:" VISION_SADMIN_LASTNAME
+read -p "Veuillez saisir votre adresse email [dark-vador@vision-localhost.me]:" VISION_SADMIN_EMAIL
+
+# Regex for a simple email validation
+email_regex="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+if [[ ! ${VISION_SADMIN_EMAIL} =~ $email_regex ]]; then
+    echo "L'adresse email est invalide"
+    exit 1
+fi
+
+echo "J'autorise Vision à enregistrer mes données dans le cadre du RGPD."
+echo "Votre adresse électronique sera gérée en toute sécurité conformément à notre politique de confidentialité."
+echo "Politique de confidentialité : https://www.algotech.vision/politique-de-confidentialite/"
+read -p "Souhaitez-vous continuer ? [yes]|no: " response
+
+if [[ "$response" != "yes" && -n "$response" ]]; then
+    exit 1
+fi
+
+read -p "J'accepte également de recevoir les offres commerciales de Vision : yes|[no]: " response
+if [ "$response" = "yes" ]; then
+VISION_ALLOWED_FOR_COMMERCIAL_USE=true
+else
+VISION_ALLOWED_FOR_COMMERCIAL_USE=false
+fi
+
+echo $VISION_ALLOWED_FOR_COMMERCIAL_USE
+
+if [ -z "${VISION_SADMIN_FIRSTNAME}" ];then
 VISION_SADMIN_FIRSTNAME=Dark
 fi
-if [ "${VISION_SADMIN_LASTNAME}x" == "x" ];then
+if [ -z "${VISION_SADMIN_LASTNAME}" ];then
 VISION_SADMIN_LASTNAME=Vador
 fi
-if [ "${VISION_SADMIN_EMAIL}x" == "x" ];then
+if [ -z "${VISION_SADMIN_EMAIL}" ];then
 VISION_SADMIN_EMAIL="dark-vador@vision-localhost.me"
 fi
 ###############################
@@ -49,13 +87,15 @@ data_init()
     "password": "$VISION_SADMIN_PASSWORD",
     "firstName": "$VISION_SADMIN_FIRSTNAME",
     "lastName": "$VISION_SADMIN_LASTNAME",
-    "defaultapplications" : ["onboarding","meteo"],
+    "defaultapplications" : ["onboarding","TO_DO_LIST"],
     "languages": [
         {
             "lang": "fr-FR",
             "value": "Français"
         }
-    ]
+    ],
+    "consent": true,
+    "allowedForCommercialUse": $VISION_ALLOWED_FOR_COMMERCIAL_USE 
 }
 EOF
 }
@@ -63,7 +103,7 @@ EOF
 count=0
 
 echo -n "Vision-CE getting ready"
-while [ "$(curl --silent ${VISION_URL}/api/ready)" != "true" ];
+while [ "$(curl --silent ${VISION_URL}/api/live)" != "true" ];
 do
 echo -n "."
 sleep 1
@@ -81,4 +121,4 @@ INIT=$(curl --silent --location --request POST ''${VISION_URL}'/api/admin/custom
 --data-raw "$(data_init)")
 
 
-echo -e "\nVision-CE ready in ${count}s \n    url: [ ${VISION_URL} ] \n    login: ${VISION_SADMIN_LOGIN} \n    password: ${VISION_SADMIN_PASSWORD}"
+echo -e "\nVision-CE ready in ${count}s \n    url: [ ${VISION_URL} ] \n    login: ${VISION_SADMIN_LOGIN}"

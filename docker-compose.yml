@@ -2,7 +2,6 @@ version: '2'
 services:
   vision-localhost:
     image: traefik:v2.9
-    restart: always
     ports:
      - "80:80"
      - "8080:8080"
@@ -12,7 +11,7 @@ services:
 
   mongodb:
     image: mongo:4.4.24
-    restart: always
+    restart: on-failure
     environment:
       - AUTH=yes
       - ADMIN_USER=my-admin-db-user
@@ -26,7 +25,6 @@ services:
 
   vision-server:
     image: algotechinfo/vision-server
-    restart: always
     depends_on:
       - keycloak
       - mongodb
@@ -66,9 +64,8 @@ services:
       - "traefik.http.middlewares.vision-server-api.replacepathregex.replacement=/$$1"
 
   keycloak:
-    restart: always
     image: algotechinfo/algo-keycloak
-    command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth --health-enabled=true
+    command: start-dev --proxy edge --hostname-admin-url=http://vision-localhost/auth --hostname-url=http://vision-localhost/auth
     environment:
       KEYCLOAK_ADMIN: vision-kc-admin
       KEYCLOAK_ADMIN_PASSWORD: vision-kc-password
@@ -86,7 +83,6 @@ services:
 
   pwa-studio:
     image: algotechinfo/pwa-studio
-    restart: always
     volumes:
       - /etc/timezone:/etc/timezone:ro
     labels:
@@ -97,7 +93,6 @@ services:
       - "traefik.frontend.passHostHeader=true"
 
   pwa-player:
-    restart: always
     image: algotechinfo/pwa-player
     volumes:
       - /etc/timezone:/etc/timezone:ro
